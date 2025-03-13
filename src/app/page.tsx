@@ -2,8 +2,10 @@
 import { useState, useEffect, useRef } from "react";
 import CardScene from "@/components/3d/CardScene";
 import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 
 const Index = () => {
+  // Handle wheel events to control when the page starts scrolling
   const [scrollY, setScrollY] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const [allowPageScroll, setAllowPageScroll] = useState(false);
@@ -22,6 +24,11 @@ const Index = () => {
         // Allow scrolling back up to reset the rectangle
         e.preventDefault();
         setScrollY((prev) => Math.max(prev + e.deltaY, 0));
+
+        // If we're going back to the start, reset the page scroll permission
+        if (scrollY - e.deltaY <= 0) {
+          setAllowPageScroll(false);
+        }
       }
     };
 
@@ -44,50 +51,69 @@ const Index = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [allowPageScroll]);
-
+  // Calculate the background gradient based on the scroll position
+  const scrollProgress = Math.min(scrollY / 2000, 1);
+  const gradientPosition = `${Math.max(
+    0,
+    Math.min(100, scrollProgress * 100)
+  )}%`;
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+    <motion.div
+      className="min-h-screen text-white overflow-x-hidden"
+      initial={{
+        background:
+          "linear-gradient(to right, rgba(37, 92, 153, 1) 0%, rgba(15, 23, 42, 1) 0%)",
+      }}
+      animate={{
+        background: `linear-gradient(to right, rgba(37, 92, 153, 1) ${gradientPosition}, rgba(15, 23, 42, 1) ${gradientPosition})`,
+      }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+    >
       <main>
         {/* 3D Scene */}
-        <section className="h-screen w-full sticky top-0">
+        <section className="h-screen w-full fixed top-0 left-0 z-10">
           <CardScene scrollY={scrollY} />
 
           {/* Overlay text */}
-          <div className="absolute inset-0  text-center z-10 pointer-events-none">
-            <span className="text-accent text-sm font-medium uppercase tracking-wider">
-              Premium Collection
-            </span>
-            <h1 className="mt-4 text-4xl sm:text-6xl font-bold text-white max-w-2xl mx-auto [text-shadow:_0_1px_5px_rgb(0_0_0_/_50%)]">
-              Discover our exclusive card collection
-            </h1>
-            <p className="mt-6 text-white/80 max-w-xl mx-auto">
-              Each deck is carefully curated and designed to provide a unique
-              experience for collectors and performers alike.
-            </p>
-            <div className="mt-8 flex justify-center gap-4 pointer-events-auto">
-              <Button className="bg-white text-black hover:bg-white/90">
-                Explore Collection
-              </Button>
-              <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white/10"
-              >
-                Learn More
-              </Button>
+          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
+            <div className="text-center ">
+              <span className="text-accent text-lg font-bold uppercase tracking-wider">
+                Card Exchange
+              </span>
+              <h1 className="mt-4 text-4xl sm:text-6xl font-bold text-white max-w-2xl mx-auto [text-shadow:_0_1px_5px_rgb(0_0_0_/_50%)]">
+                Find the decks you&apos;ve been looking for
+              </h1>
+
+              <div className="mt-8 flex justify-center gap-4 pointer-events-auto">
+                <Button className="bg-white text-black hover:bg-white/90">
+                  Explore Collection
+                </Button>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Content section that will only scroll after the animation completes */}
-        <div ref={contentRef}>
-          {/* Adding scrollable content to enable scrolling */}
-          <section className="min-h-screen py-20 px-6 md:px-10 bg-black/50 backdrop-blur-sm">
-            <div className="max-w-6xl mx-auto">
+        {/* Content section that scrolls on top of the fixed section */}
+        <div
+          ref={contentRef}
+          className="relative z-20"
+          style={{
+            marginTop: "100vh", // Start content after the height of the first section
+            background:
+              "linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8) 5%, black 15%)",
+          }}
+        >
+          {/* Add a spacer to allow scrolling to reveal content */}
+          <div style={{ height: "100px" }}></div>
+
+          {/* Content sections */}
+          <section className="min-h-screen py-20 px-6 md:px-10 backdrop-blur-sm">
+            <div className="max-w-screen mx-auto">
               <h2 className="text-3xl md:text-5xl font-bold mb-12 text-center">
                 Our Featured Decks
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
@@ -147,7 +173,7 @@ const Index = () => {
           </section>
         </div>
       </main>
-    </div>
+    </motion.div>
   );
 };
 

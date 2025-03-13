@@ -1,4 +1,5 @@
 "use client";
+
 import { Canvas } from "@react-three/fiber";
 import {
   PerspectiveCamera,
@@ -14,8 +15,8 @@ interface SceneProps {
 const Scene = ({ scrollY = 0 }: SceneProps) => {
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 0, 10]} />
-      <ambientLight intensity={0.5} />
+      <PerspectiveCamera makeDefault position={[0, 0, 15]} />
+      <ambientLight intensity={10.0} />
       <spotLight
         position={[10, 10, 10]}
         angle={0.15}
