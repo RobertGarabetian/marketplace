@@ -1,103 +1,154 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect, useRef } from "react";
+import CardScene from "@/components/3d/CardScene";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+const Index = () => {
+  const [scrollY, setScrollY] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [allowPageScroll, setAllowPageScroll] = useState(false);
+
+  // Handle wheel events to control when the page starts scrolling
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      // If the rectangle hasn't completed its journey, prevent default scrolling
+      if (scrollY < 2000 && e.deltaY > 0) {
+        e.preventDefault();
+        setScrollY((prev) => Math.min(prev + e.deltaY, 2000));
+      } else if (scrollY >= 2000) {
+        // Once the rectangle has completed its journey, allow page scrolling
+        setAllowPageScroll(true);
+      } else if (scrollY > 0 && e.deltaY < 0) {
+        // Allow scrolling back up to reset the rectangle
+        e.preventDefault();
+        setScrollY((prev) => Math.max(prev + e.deltaY, 0));
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [scrollY]);
+
+  // Track regular scroll position only after we allow page scroll
+  useEffect(() => {
+    if (!allowPageScroll) return;
+
+    const handleScroll = () => {
+      // Only update regular scroll position once we're allowing page scroll
+      if (allowPageScroll) {
+        // Keep scrollY at 2000 once we've started page scrolling
+        setScrollY(2000);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [allowPageScroll]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      <main>
+        {/* 3D Scene */}
+        <section className="h-screen w-full sticky top-0">
+          <CardScene scrollY={scrollY} />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          {/* Overlay text */}
+          <div className="absolute inset-0  text-center z-10 pointer-events-none">
+            <span className="text-accent text-sm font-medium uppercase tracking-wider">
+              Premium Collection
+            </span>
+            <h1 className="mt-4 text-4xl sm:text-6xl font-bold text-white max-w-2xl mx-auto [text-shadow:_0_1px_5px_rgb(0_0_0_/_50%)]">
+              Discover our exclusive card collection
+            </h1>
+            <p className="mt-6 text-white/80 max-w-xl mx-auto">
+              Each deck is carefully curated and designed to provide a unique
+              experience for collectors and performers alike.
+            </p>
+            <div className="mt-8 flex justify-center gap-4 pointer-events-auto">
+              <Button className="bg-white text-black hover:bg-white/90">
+                Explore Collection
+              </Button>
+              <Button
+                variant="outline"
+                className="border-white text-white hover:bg-white/10"
+              >
+                Learn More
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Content section that will only scroll after the animation completes */}
+        <div ref={contentRef}>
+          {/* Adding scrollable content to enable scrolling */}
+          <section className="min-h-screen py-20 px-6 md:px-10 bg-black/50 backdrop-blur-sm">
+            <div className="max-w-6xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-bold mb-12 text-center">
+                Our Featured Decks
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-800/60 rounded-xl p-6 hover:bg-gray-800/80 transition-all duration-300"
+                  >
+                    <div className="aspect-[2/3] bg-gray-700 rounded-lg mb-4"></div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      Premium Deck {index + 1}
+                    </h3>
+                    <p className="text-gray-400 mb-4">
+                      Exquisite design with premium quality materials and
+                      finish.
+                    </p>
+                    <Button variant="secondary" className="w-full">
+                      View Details
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="min-h-screen py-20 px-6 md:px-10 bg-gradient-to-b from-gray-900 to-black">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="text-3xl md:text-5xl font-bold mb-8">
+                About Our Collection
+              </h2>
+              <p className="text-lg text-gray-300 mb-12">
+                Our playing cards are designed with meticulous attention to
+                detail, using only the finest materials. Each deck tells a
+                unique story through its artwork and design, making it not just
+                a tool for card games but also a collectible piece of art.
+              </p>
+
+              <div className="space-y-10">
+                {[
+                  {
+                    title: "Premium Materials",
+                    desc: "We use the highest quality card stock and finishes.",
+                  },
+                  {
+                    title: "Limited Editions",
+                    desc: "Many of our decks are produced in limited quantities.",
+                  },
+                  {
+                    title: "Artistic Designs",
+                    desc: "We collaborate with renowned artists for unique aesthetics.",
+                  },
+                ].map((item, index) => (
+                  <div key={index} className="p-6 bg-gray-800/60 rounded-xl">
+                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                    <p className="text-gray-400">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
-}
+};
+
+export default Index;
